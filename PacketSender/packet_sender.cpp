@@ -119,18 +119,27 @@ int main() {
 
 	struct pcap_pkthdr *header;
 	const unsigned char *pkt_data;
+
 	int res;
 	while ((res = pcap_next_ex(fp, &header, &pkt_data)) >= 0) {// 1 if success
 		if (res == 0) continue; // 0 if time-out
-		print_raw_packet(pkt_data, header->caplen);
-		print_ether_header(pkt_data);
-		print_ip_header(pkt_data);
-		print_tcp_header(pkt_data);
-		print_data(pkt_data, header->caplen);
+		
+			print_raw_packet(pkt_data, header->caplen);
+			print_ether_header(pkt_data);
+			print_ip_header(pkt_data);
+			print_tcp_header(pkt_data);
+			print_data(pkt_data, header->caplen);
+			break;
 	}
+	int k; int len = header->caplen;
+	printf("\nKill server and cli ; run original sniffer\n");
+	scanf("%d", &k);
+	if (pcap_sendpacket(fp, pkt_data, k)!=0){
+		
+		printf("\nError\n");
 
 
-
+	}
 
 
 
@@ -141,7 +150,7 @@ int main() {
 Printing  Data
 */
 void print_raw_packet(const unsigned char *pkt_data, int len) {
-	printf("\n-------raw packet ------\n");
+	printf("\n-------RAW PACKET ------\n");
 	printf("pkt len: %d\n", len);
 	for (int i = 0; i < len; i++)
 	{
@@ -151,28 +160,62 @@ void print_raw_packet(const unsigned char *pkt_data, int len) {
 	}
 }
 void print_ether_header(const unsigned char *pkt_data) {
-	printf("\n-------ether header------\n");
+	printf("\n-------ETHER HEADER------\n");
 	ether_header *eh = (ether_header*)&pkt_data[0];
 	ether_addr *eh_addr_d = (ether_addr*)&eh->ether_dhost;
 	ether_addr *eh_addr_s = (ether_addr*)&eh->ether_shost;
-	printf("destination ip address: %s\n", eh_addr_d->ether_addr_octet);
-	printf("source ip address: %s\n ", eh_addr_s->ether_addr_octet);
-	printf("source ip address: %d\n ", eh->ether_type);
+	printf("destination ip address: %x\n", eh_addr_d->ether_addr_octet);
+	printf("source ip address: %x\n", eh_addr_s->ether_addr_octet);
+	printf("ether type: %d\n", eh->ether_type);
+
 
 }
 void print_ip_header(const unsigned char *pkt_data) {
-	printf("\n-------ip header------\n");
+	printf("\n-------IP HEADER------\n");
 	ip_hdr *ih = (ip_hdr*)&pkt_data[14];
-	printf("ip header len: %d ver: %d ", ih->ip_header_len * 4, ih->ip_version);
+	printf("ip_header_len: %d\n", ih->ip_header_len);
+	printf("ip_version: %d\n", ih->ip_version);
+	printf("ip_tos: %d\n", ih->ip_tos);
+	printf("ip_total_length: %d\n", ih->ip_total_length);
+	printf("ip_id: %d\n", ih->ip_id);
+	printf("ip_frag_offset: %d\n", ih->ip_frag_offset);
+	printf("ip_more_fragment: %d\n", ih->ip_more_fragment);
+	printf("ip_dont_fragment: %d\n", ih->ip_dont_fragment);
+	printf("ip_reserved_zero: %d\n", ih->ip_reserved_zero);
+	printf("ip_frag_offset1: %d\n", ih->ip_frag_offset1);
+	printf("ip_ttl: %d\n", ih->ip_ttl);
+	printf("ip_protocol: %d\n", ih->ip_protocol);
+	printf("ip_checksum: %d\n", ih->ip_checksum);
+	printf("ip_srcaddr: %d\n", ih->ip_srcaddr);
+	printf("ip_destaddr: %d\n", ih->ip_destaddr);
 
 }
 void print_tcp_header(const unsigned char *pkt_data) {
 	printf("\n-------TCP HEADER ------\n");
 	tcp_hdr *th = (tcp_hdr*)&pkt_data[34];
-	printf("tcp header len: %d Source prot: %d Destination port %d", th->data_offset * 4, th->source_port, th->dest_port);
+	printf("tcp header len: %d ", th->data_offset * 4);
+	printf("source_port: %d\n", th->source_port);
+	printf("dest_port: %d\n", th->dest_port);
+	printf("sequence: %d\n", th->sequence);
+	printf("acknowledge: %d\n", th->acknowledge);
+	printf("ns: %d\n", th->ns);
+	printf("reserved_part1: %d\n", th->reserved_part1);
+	printf("data_offset: %d\n", th->data_offset);
+	printf("fin: %d\n", th->fin);
+	printf("syn: %d\n", th->syn);
+	printf("rst: %d\n", th->rst);
+	printf("psh: %d\n", th->psh);
+	printf("ack: %d\n", th->ack);
+	printf("urg: %d\n", th->urg);
+	printf("ecn: %d\n", th->ecn);
+	printf("cwr: %d\n", th->cwr);
+	printf("window: %d\n", th->window);
+	printf("checksum: %d\n", th->checksum);
+	printf("urgent_pointer: %d\n", th->urgent_pointer);
+
 }
 void print_data(const unsigned char *pkt_data, int len) {
-	printf("\n-------raw packet ------\n");
+	printf("\n------- DATA ------\n");
 	tcp_hdr *th = (tcp_hdr*)&pkt_data[34];
 	int starting = 34 + th->data_offset * 4;
 
@@ -184,44 +227,7 @@ void print_data(const unsigned char *pkt_data, int len) {
 	}
 }
 
-/*
-Building packet
-*/
-const unsigned char * buildPacket(const unsigned char *pkt_data) {
 
 
 
-
-	return pkt_data;
-
-
-}
-
-
-
-/*
-checksum
-*/
-unsigned short in_checksum(unsigned short *ptr, int nbytes) {
-	register long sum;
-	unsigned short oddbyte;
-	register short answer;
-
-	sum = 0;
-	while (nbytes>1) {
-		sum += *ptr++;
-		nbytes -= 2;
-	}
-	if (nbytes == 1) {
-		oddbyte = 0;
-		*((u_char*)&oddbyte) = *(u_char*)ptr;
-		sum += oddbyte;
-	}
-
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum = sum + (sum >> 16);
-	answer = (SHORT)~sum;
-
-	return(answer);
-}
 

@@ -103,7 +103,7 @@ int main() {
 	struct bpf_program  fcode;
 	if (pcap_compile(fp,  // pcap handle
 		&fcode,  // compiled rule
-		"host 165.246.38.152 and port 64099",  // filter rule
+		"host 165.246.38.152 and port 110044",  // filter rule
 		1,            // optimize
 		NULL) < 0) {
 		printf("pcap compile failed\n");
