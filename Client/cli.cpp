@@ -2,7 +2,7 @@
 #include "ws2tcpip.h"
 #include "stdio.h"
 
-#define SERVER_PORT 11044  // server port number
+#define SERVER_PORT 64099  // server port number
 #define BUF_SIZE 4096 // block transfer size  
 #define QUEUE_SIZE 10
 #define IPAddress "165.246.38.152" // server IP address
